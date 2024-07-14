@@ -14,7 +14,7 @@ This project is implemented using `C++` and Parsing of HTTP referred from <a hre
 ##### Introduction
 
 ##### Basic Working Flow of the Proxy Server:
-![](https://github.com/kunalsingh1301/proxy_server_for_windows/blob/main/resources/UML.jpg)
+![](https://github.com/kunalsingh1301/proxy_server_for_windows/blob/main/resources/uml2.png)
 
 ##### How did we implement Multi-threading?
 - Used Semaphore instead of Condition Variables and `WaitForSingleObject()` and `ExitThread()` function. 
