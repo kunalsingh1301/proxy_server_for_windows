@@ -1,26 +1,21 @@
-# Compiler and flags
-CXX = g++
-CXXFLAGS = -Wall -Wextra -std=c++17 -I.
+# Makefile for Windows using MinGW
 
-# Source files
-SRCS = proxy_parse.cpp proxy_server_with_cache.cpp
-
-# Object files
-OBJS = $(SRCS:.cpp=.o)
-
-# Output binary
+CC = g++
+CFLAGS = -Wall -g -std=c++17
 TARGET = proxy_server
+SOURCES = proxy_parse.cpp proxy_server_with_cache.cpp
+OBJECTS = $(SOURCES:.cpp=.o)
 
-# Build rules
 all: $(TARGET)
 
-$(TARGET): $(OBJS)
-	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+$(TARGET): $(OBJECTS)
+    $(CC) $(CFLAGS) -o $@ $^
 
 %.o: %.cpp
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+    $(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJS) $(TARGET)
+    rm -f $(OBJECTS) $(TARGET)
 
-.PHONY: all clean
+run: all
+    .\$(TARGET)
