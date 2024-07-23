@@ -1,21 +1,18 @@
-# Makefile for Windows using MinGW
-
 CC = g++
-CFLAGS = -Wall -g -std=c++17
-TARGET = proxy_server
-SOURCES = proxy_parse.cpp proxy_server_with_cache.cpp
-OBJECTS = $(SOURCES:.cpp=.o)
+CFLAGS = -Wall -Wextra -std=c++11
+LDFLAGS = -lws2_32
+
+SRCS = proxy_parse.cpp proxy_server_with_cache.cpp
+OBJS = $(SRCS:.cpp=.o)
+TARGET = proxy_server.exe
 
 all: $(TARGET)
 
-$(TARGET): $(OBJECTS)
-    $(CC) $(CFLAGS) -o $@ $^
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) -o $(TARGET) $(LDFLAGS)
 
 %.o: %.cpp
-    $(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-    rm -f $(OBJECTS) $(TARGET)
-
-run: all
-    .\$(TARGET)
+	rm -f $(OBJS) $(TARGET)
