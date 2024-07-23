@@ -1,0 +1,26 @@
+# Compiler and flags
+CXX = g++
+CXXFLAGS = -Wall -Wextra -std=c++17 -I.
+
+# Source files
+SRCS = proxy_parse.cpp proxy_server_with_cache.cpp
+
+# Object files
+OBJS = $(SRCS:.cpp=.o)
+
+# Output binary
+TARGET = proxy_server
+
+# Build rules
+all: $(TARGET)
+
+$(TARGET): $(OBJS)
+	$(CXX) $(CXXFLAGS) -o $(TARGET) $(OBJS)
+
+%.o: %.cpp
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+clean:
+	rm -f $(OBJS) $(TARGET)
+
+.PHONY: all clean

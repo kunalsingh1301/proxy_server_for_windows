@@ -18,15 +18,21 @@ using namespace std;
 #pragma comment(lib, "Ws2_32.lib")
 #define MAX_CLIENTS 10
 #define MAX_BYTES 4096
+#define MAX_ELEMENT_SIZE 10*(1<<10)
+#define MAX_SIZEe 200*(1<<20)
 
 typedef struct cache_element cache_element;
 
 class cache_element { // linked list for LRU cache
 public:
     vector<char> data;
+    int len;
     string url;
     time_t lru_time_track;
     cache_element* next;
+
+    cache_element(const string& url, const vector<char>& data)
+        : url(url), data(data.begin(), data.end()), lru_time_track(time(NULL)), next(nullptr) {}
 };
 
 cache_element* find(const string& url);
@@ -42,6 +48,8 @@ HANDLE locki;
 
 cache_element* head;
 int cache_size;
+
+
 
 int checkHTTPversion(char* msg) {
     int version = -1;
@@ -352,5 +360,84 @@ int main(int argc, char* argv[]) {
         i++;
     }
     closesocket(proxy_socketId);
+    return 0;
+}
+
+cache_element* find(string &url){
+    cache_element *site = NULL;
+    int temp_lock_val = WaitForSingleObject(locki,INFINITE);//pthread_mutex_lock
+    cout<< "remove cache lock acquired"<<temp_lock_val<<"\n";
+    if(head){
+        site = head;
+        while(site){
+            if(!strcmp(site->url.data(),url.data())){
+                cout<<"lru time track before"<<site->lru_time_track<<"\n";
+                cout<<"\n url not found \n";
+                site->lru_time_track = time(NULL);
+                cout<<"lru time track after"<<site->lru_time_track<<"\n";
+                break;
+            }
+            site = site->next;
+            
+        }
+    }else{
+        cout<<"url not found\n";
+    }
+    temp_lock_val = ReleaseMutex(locki);
+    cout<<"unlocked\n";
+    return site;
+}
+
+void remove_cache_element(){
+    // If cache is not empty searches for the node which has the least lru_time_track and deletes it
+    cache_element * p ;  	// Cache_element Pointer (Prev. Pointer)
+	cache_element * q ;		// Cache_element Pointer (Next Pointer)
+	cache_element * temp;	// Cache element to remove
+    //sem_wait(&cache_lock);
+    int temp_lock_val = WaitForSingleObject(locki,INFINITE);
+	printf("Remove Cache Lock Acquired %d\n",temp_lock_val); 
+	if( head != NULL) { // Cache != empty
+		for (q = head, p = head, temp =head ; q -> next != NULL; 
+			q = q -> next) { // Iterate through entire cache and search for oldest time track
+			if(( (q -> next) -> lru_time_track) < (temp -> lru_time_track)) {
+				temp = q -> next;
+				p = q;
+			}
+		}
+		if(temp == head) { 
+			head = head -> next; /*Handle the base case*/
+		} else {
+			p->next = temp->next;	
+		}
+		cache_size = cache_size - (temp -> len) - sizeof(cache_element) - 
+		(temp -> url).size() - 1;     //updating the cache size
+	} 
+	//sem_post(&cache_lock);
+    temp_lock_val = ReleaseMutex(locki);
+	cout<<"Remove Cache Lock Unlocked"<<temp_lock_val<<"\n"; 
+}
+
+int add_cache_element(vector<char>& data, int size, const string& url){
+    int temp_lock_val = WaitForSingleObject(locki,INFINITE);//pthread_mutex_lock
+    cout<< "remove cache lock acquired"<<temp_lock_val<<"\n";
+    int element_size = size + 1 + url.length() + sizeof(cache_element);
+    if(element_size < MAX_ELEMENT_SIZE){
+        temp_lock_val = ReleaseMutex(locki);
+        cout<<"add cache is unlocked";
+        return 0;
+    }else{
+        while(cache_size + element_size > MAX_SIZEe){
+            remove_cache_element();
+        }
+        cache_element *element = new cache_element(url,data);
+        element->lru_time_track = time(NULL);
+        element->next = head; //set to null
+        element->len = size;
+        head = element;
+        cache_size += element_size;
+        temp_lock_val = ReleaseMutex(locki);
+        cout<<"add cache lock unlocked"<< temp_lock_val<<"\n";
+        return 1;
+    }
     return 0;
 }
